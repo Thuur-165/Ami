@@ -1,0 +1,65 @@
+{
+  "host": "localhost:1234",
+  "location": "br-pt",
+  "models": {
+      "main": "google/gemma-3-12b",
+      "embedding": "text-embedding-nomic-embed-text-v2-moe",
+      "file_summarizer": "lfm2-vl-1.6b"
+    },
+
+  "colors": {
+    "user": "\u001b[1;34m",
+    "header": "\u001b[1;35m",
+    "assistant": "\u001b[36m", 
+    "success": "\u001b[32m",
+    "warning": "\u001b[33m",
+    "error": "\u001b[31m",
+    "info": "\u001b[34m",
+    "default": "\u001b[0m",
+    "bold": "\u001b[1m",
+    "dim": "\u001b[2m",
+    "italic": "\u001b[3m",
+    "underline": "\u001b[4m"
+  },
+  "emojis": {
+    "chat": "💬 ",
+    "memory": "🧠 ",
+    "history": "🗂  ",
+    "clean": "🧹 ",
+    "date": "📅 ",
+    "time": "🕒 ",
+    "save": "💾 ",
+    "error": "❌ ",
+    "warning": "⚠️  ",
+    "success": "✅ ",
+    "thinking": "🤔 ",
+    "tool": "🔧 ",
+    "loading": "⏳ "
+  },
+  "commands": {
+    "exit": ["/sair", "/q", "/quit"],
+    "help": ["/help", "/ajuda", "/?"],
+    "show_history": ["/hist", "/historico"],
+    "clear": ["/clear", "/cl"]
+  },
+  "advanced": {
+    "keyboard_interrupt": true,
+    "use_history" : true,
+    "data_clear_delay": 4,
+    "verbose_tool_calls": false,
+    "inferParams": {
+      "contextOverflowPolicy": "rollingWindow",
+      "cpuThreads": 6,
+      "temperature": 0.7,
+      "topKSampling": 30,
+      "repeatPenalty": 1.101,
+      "minPSampling": 0.105
+    },
+    "loadParams": {
+      "contextLength": 7680,
+      "flashAttention": false,
+      "ropeFrequencyBase": 12000
+    },
+    "history_limit": 18
+  }
+}
