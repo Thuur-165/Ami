@@ -34,7 +34,8 @@
     "success": "✅ ",
     "thinking": "🤔 ",
     "tool": "🔧 ",
-    "loading": "⏳ "
+    "loading": "⏳ ",
+    "info": "ℹ️ "
   },
   "commands": {
     "exit": ["/sair", "/q", "/quit"],
@@ -47,19 +48,21 @@
     "use_history" : true,
     "data_clear_delay": 4,
     "verbose_tool_calls": false,
-    "inferParams": {
+    "infer_params": {
       "contextOverflowPolicy": "rollingWindow",
       "cpuThreads": 6,
-      "temperature": 0.7,
-      "topKSampling": 30,
-      "repeatPenalty": 1.101,
-      "minPSampling": 0.105
+      "temperature": 0.1,
+      "topPSampling": 0.95,
+      "topKSampling": 40,
+      "repeatPenalty": 1.1,
+      "minPSampling": 0.05
     },
-    "loadParams": {
-      "contextLength": 7680,
-      "flashAttention": false,
-      "ropeFrequencyBase": 12000
+    "load_params": {
+      "contextLength": 10240,
+      "ropeFrequencyBase": 12000,
+      "flashAttention": true
     },
-    "history_limit": 18
+    "jinja_template": "root/template.jinja",
+    "history_limit": 40
   }
 }

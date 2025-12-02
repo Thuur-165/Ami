@@ -60,7 +60,7 @@ class SistemaRelogio:
     @tool
     def obter_horario(self, pais: Optional[str] = '') -> str:
         """
-        Obtém o horário atual em formato brasileiro (DD/MM/AAAA HH:mm, Dia da semana).
+        Obtém o horário atual em formato brasileiro (DD-MM-AAAA HH:mm, Dia da semana).
         
         Use esta ferramenta quando precisar verificar o horário atual em qualquer parte do mundo.
         Se não especificar país, retorna o horário local do sistema.
@@ -70,8 +70,8 @@ class SistemaRelogio:
         
         Returns:
             String formatada com data, horário e dia da semana no formato:
-            "Horário atual: DD/MM/AAAA às HH:mm (Dia da semana) [Fuso horário]"
-            Exemplo: "Horário atual: 16/11/2025 às 14:30 (Domingo) (Brasil)"
+            "Horário atual: DD-MM-AAAA às HH:mm (Dia da semana) [Fuso horário]"
+            Exemplo: "Horário atual: 16-11-2025 às 14:30 (Domingo) (Brasil)"
         """
         try:
             # Se não foi especificado país, usa horário local
@@ -99,7 +99,7 @@ class SistemaRelogio:
                         fuso_horario_nome = f'Local (país "{pais}" não reconhecido)'
             
             # Formata a data no formato brasileiro DD/MM/AAAA
-            data_str = now.strftime('%d/%m/%Y')
+            data_str = now.strftime('%d-%m-%Y')
             
             # Formata a hora HH:mm
             hora_str = now.strftime('%H:%M')

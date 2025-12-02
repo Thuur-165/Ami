@@ -155,7 +155,7 @@ class MemorySystem:
                 results = cursor.fetchall()
                 
                 if not results:
-                    return 'Nenhuma memória salva ainda'
+                    return 'Nenhuma memória salva ainda.\nDica: Siga o assunto insentivando criar memórias novas!'
                 
                 output = f'Últimas {len(results)} memória(s):\n\n'
                 for mem_id, titulo, desc, ts in results:
@@ -202,53 +202,44 @@ class MemorySystem:
             return f'Erro ao deletar: {str(e)}'
 
     @tool
-    def gerenciar_memorias(
-        self,
-        acao: Literal['salvar', 'pesquisar', 'recentes', 'deletar'], 
-        titulo: str = '',
-        descricao: str = '',
-        busca: str = ''
-    ) -> str:
-        """Gerencia informações armazenadas permanentemente no sistema de memória.
+    def salvar_memoria(self, titulo: str, conteudo: str) -> str:
+        """Salva uma nova informação importante na memória de longo prazo da Ami.
         
-        Use esta ferramenta para:
-        - 'salvar': Armazenar informações importantes para consulta futura
-        - 'pesquisar': Encontrar memórias relacionadas a um termo específico
-        - 'recentes': Ver as memórias mais recentemente salvas
-        - 'deletar': Remover uma memória pelo título
+        Use isso quando o usuário pedir explicitamente para lembrar de algo,
+        ou quando ele contar um fato novo sobre a vida dele (gostos, nome, trabalho).
         
         Args:
-            acao: Ação a ser executada (obrigatório)
-            titulo: Título da memória (obrigatório para 'salvar' e 'deletar')
-            descricao: Conteúdo detalhado da memória (obrigatório para 'salvar')
-            busca: Termo para pesquisa (obrigatório para 'pesquisar')
-        
-        Returns:
-            Confirmação detalhada da operação realizada ou mensagem de erro explicativa
-            com sugestões para correção
+            titulo: Um título curto e descritivo para a memória.
+            conteudo: O conteúdo detalhado do que deve ser lembrado.
         """
-        try:
-            match acao:
-                case 'salvar':
-                    if not titulo:
-                        return 'Erro: operação "salvar" requer título'
-                    return self._save_memory(titulo, descricao)
-                
-                case 'pesquisar':
-                    if not busca:
-                        return 'Erro: operação "pesquisar" requer argumento "busca"'
-                    return self._search_memories(busca)
-                
-                case 'recentes':
-                    return self._get_recent_memories()
-                
-                case 'deletar':
-                    if not titulo:
-                        return 'Erro: operação "deletar" requer título'
-                    return self._delete_memory(titulo)
-                
-                case _:
-                    return f'Operação inválida: {acao}. Use: salvar, pesquisar, recentes ou deletar'
+        return self._save_memory(titulo, conteudo)
+
+    @tool
+    def buscar_memoria(self, busca: str) -> str:
+        """Pesquisa nas memórias salvas por palavras-chave.
         
-        except Exception as e:
-            return f'Erro na operação "{acao}": {str(e)}'
+        Use isso sempre que precisar recuperar informações específicas e mais antigas.
+        
+        Args:
+            busca: A palavra-chave ou frase para buscar no banco de dados.
+        """
+        return self._search_memories(busca)
+    
+    @tool
+    def listar_memorias_recentes(self) -> str:
+        """Mostra as últimas 5 memórias adicionadas ao sistema.
+        
+        Útil para memórias abrangentes e recentemente salvas.
+        """
+        return self._get_recent_memories()
+    
+    @tool
+    def esquecer_memoria(self, titulo: str) -> str:
+        """Apaga uma memória específica permanentemente.
+        
+        Use para esquecer ou remover algo.
+        
+        Args:
+            titulo: O título da memória a ser deletada (deve ser exato ou muito próximo).
+        """
+        return self._delete_memory(titulo)

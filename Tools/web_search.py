@@ -303,120 +303,78 @@ class WebSearchEngine:
         
         return float(similarity)
 
-
-   @tool
-   def pesquisar_web(
-      self,
-      busca: str,
-      categoria: Literal['texto', 'imagens', 'videos', 'noticias'] = 'texto',
-      data: Optional[Literal['todos', 'd', 's', 'm', 'a']] = 'todos',
-      engine: Optional[Literal['google', 'wikipedia']] = 'google'
-      ) -> str:
-      """Realiza uma pesquisa na Internet usando DDGS e retorna resultados relevantes.
-
-      Use esta ferramenta quando precisar obter informações atualizadas da internet.
-      O termo de busca deve ser claro e específico para melhores resultados.
-
-      Args:
-          busca: Termo ou frase que deseja pesquisar na web
-          categoria: Categoria da pesquisa: 'texto', 'imagens', 'videos' ou 'noticias'
-          data: Período de tempo: 'todos', 'd' (Últimas 24h), 's' (Última semana), 'm' (Último mês) ou 'a' (Último ano)
-          engine: Motor de busca para texto: 'google' ou 'wikipedia'
-
-      Returns:
-          String JSON com lista de resultados contendo: título, link, snippet e id único para referência posterior com pesquisar_na_pagina
-      """
-      
-      if not data:
-         data = 'todos'
-      if not engine:
-         engine = 'google'
-
-      date = {
-         'todos': None,
-         'd': 'd',
-         's': 'w',
-         'm': 'm',
-         'a': 'y'
-      }.get(data)
-
-      match categoria:
-         case 'texto':
-            return self._text_search(query=busca, date=date, engine=engine)
-         case 'imagens':
-            return self._image_search(query=busca, date=date)
-         case 'noticias':
-            return self._news_search(query=busca, date=date)
-         case 'videos':
-            return self._video_search(query=busca, date=date)
-         case _:
-            return "Categoria não encontrada! Use: 'texto', 'imagens', 'videos' ou 'noticias'."
-
-   @tool
-   def pesquisar_pagina(self, busca: str, pagina: str) -> str:
-      """Pesquisa trechos específicos dentro de uma página web.
-
-      Use esta ferramenta após pesquisar_web com o ID da página fornecida por "pesquisar_web"
-      O argumento 'pagina' pode ser o ID de uma página retornada por "pesquisar_web" ou uma URL diretamente.
-
-      Args:
-          busca: Termo ou frase específica que deseja encontrar na página (usa embeddings)
-          pagina: ID numérico da página(retornada de pesquisar_web) ou URL completa
-
-      Returns:
-          Os 3 trechos mais relevantes da página que correspondem ao termo de busca,
-          ou mensagem de erro se a página não for encontrada ou acessível
-      """
-
-      # Determina o modo: ID ou URL
-      page_url = None
-      try:
-         # Tenta converter para int: modo ID
-         int(pagina)
-         # Carrega o cache para obter a URL da página
+   def _resolve_target(self, target: str) -> str | None:
+      """Retorna a URL baseada no input (seja ID ou URL direta)."""
+      # Caso 1: É um ID numérico (ex: "0", "1")
+      if target.isdigit():
          try:
             with open(CACHE_PAGES_PATH, 'r', encoding='utf-8') as f:
-               cache = json.load(f)
-         except (FileNotFoundError, json.JSONDecodeError):
-            return 'Erro: Lista de páginas não encontrada. Execute pesquisar_web com um termo de busca primeiro.'
+                  cache = json.load(f)
+            for item in cache:
+                  if item.get('id') == target:
+                     return item.get('link')
+         except Exception:
+            return None
+      
+      # Caso 2: É uma URL direta
+      if target.startswith('http'):
+         return target
+         
+      return None
 
-         # Encontra a página pelo ID
-         for page in cache:
-            if page.get('id') == pagina:
-               page_url = page.get('link')
-               break
+   @tool
+   def pesquisar_google(
+      self,
+      busca: str,
+      periodo: Literal['todos', 'dia', 'semana', 'mes'] = 'todos'
+   ) -> str:
+      """Pesquisa texto/informações gerais no Google.
+      
+      Args:
+         busca: Termo ou palavra a ser buscada.
+         periodo: Tempo limite do resultado, onde
+            `todos` = qualquer período;
+            `d` = últimas 24h;
+            `s` = última semana;
+            `m` = último mês;
+            Padroniza para `todos`.
+      """
+      return self._text_search(query=busca, date=periodo, engine='google')
 
-         if not page_url:
-            return 'Erro: ID da página não encontrado, use os resultados de pesquisar_web.'
+   @tool
+   def pesquisar_imagens(self, busca: str) -> str:
+      """Pesquisa imagens na web. Retorna links e descrições."""
+      return self._image_search(query=busca, date=None)
 
-      except ValueError:
-         # Não é int: verifica se contém 'http' para modo URL
-         if 'http' in pagina:
-            page_url = pagina
-         else:
-            return 'Erro: Argumento "pagina" inválido. Deve ser ID numérico ou URL com "http".'
+   @tool
+   def pesquisar_videos(self, busca: str) -> str:
+      """Pesquisa vídeos (YouTube/Web). Retorna títulos, links e visualizações."""
+      return self._video_search(query=busca, date=None)
 
-      # Faz o web scraping da página
+   @tool
+   def pesquisar_noticias(self, busca: str) -> str:
+      """Pesquisa notícias recentes (última semana) sobre um tema."""
+      return self._news_search(query=busca, date='w')
+
+   @tool
+   def ler_pagina_web(self, alvo: str, busca: str) -> str:
+      """Lê conteúdo de uma página web (via URL ou ID de pesquisa).
+      
+      Args:
+         alvo: URL completa (https://...) OU o ID numérico de uma pesquisa anterior (ex: '0').
+         busca: Tópico específico para extrair via IA (Embeddings).
+      """
+      url = self._resolve_target(alvo)
+      if not url:
+         return "Erro: URL inválida ou ID não encontrado."
+
       try:
-         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-         }
-         response = requests.get(page_url, headers=headers, timeout=10)
+         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+         response = requests.get(url, headers=headers, timeout=10)
          response.raise_for_status()
-         html_content = response.text
-      except requests.RequestException as e:
-         return f'Erro ao acessar página: {str(e)}'
+         clean_content = self._clean_html_content(response.text)
+      except Exception as e:
+         return f'Erro ao acessar {url}: {str(e)}'
 
-      # Remove tags inúteis e seus conteúdos usando regex
-      clean_content = self._clean_html_content(html_content)
-
-      # Divide o conteúdo em chunks para processamento
-      chunks = self._split_text_into_chunks(clean_content, max_chunk_size=500)
-
-      if not chunks:
-         return 'Erro: Não foi possível extrair texto da página.'
-
-      # Calcula embeddings e encontra conteúdo relevante
-      relevant_content = self._extract_relevant_content_with_embeddings(busca, chunks)
-
-      return relevant_content
+      chunks = self._split_text_into_chunks(clean_content)
+      return self._extract_relevant_content_with_embeddings(busca, chunks)

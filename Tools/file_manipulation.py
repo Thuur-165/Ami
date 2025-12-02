@@ -23,26 +23,6 @@ class FileManager:
         """
         FILE_SANDBOX.mkdir(parents=True, exist_ok=True)
 
-    def _create_file(self, name: str, conteudo: Optional[str] = '') -> str:
-        """Cria ou sobrescreve um arquivo."""
-        try:            
-            full_path = FILE_SANDBOX / name
-            
-            if full_path.exists():
-                current = full_path.read_text(encoding='utf-8')
-                preview = current if len(current) < 200 else current[:200] + '[...]'
-                return f'Arquivo já existe! Conteúdo: {preview}'
-            
-            full_path.write_text(conteudo or '', encoding='utf-8')
-            return f'Arquivo {name} criado com sucesso!'
-            
-        except PermissionError as e:
-            return f'Erro de permissão ao criar o arquivo {name}: {e}'
-        except OSError as e:
-            return f'Erro no sistema de arquivos ao criar {name}: {e}'
-        except Exception as e:
-            return f'Erro inesperado ao criar arquivo {name}: {e}'
-
     def _read_file(self, name: str | Path) -> str:
         """Lê o conteúdo de um arquivo."""
         try:
@@ -129,47 +109,74 @@ Forneça um resumo claro em 2-3 parágrafos"""
             return f'Erro ao resumir arquivo: {e}'
 
     @tool
-    def gerenciar_arquivos(
-        self,
-        acao: Literal['criar', 'deletar', 'listar', 'resumir'],
-        arquivo: Optional[str] = '',
-        conteudo: Optional[str] = '',
-        foco: Optional[str] = ''
-    ) -> str:
-        """Realiza operações seguras com arquivos.
+    def criar_arquivo(self, nome: str, conteudo: str) -> str:
+        """Cria um novo arquivo (ou sobrescreve) no sandbox.
         
-        Use esta ferramenta para manipular arquivos sem riscos ao sistema principal.
-        Ações disponíveis:
-        - 'criar': Cria novo arquivo com conteúdo especificado
-        - 'deletar': Remove arquivo(s)
-        - 'listar': Mostra todos os arquivos no diretório sandbox
-        - 'resumir': Gera resumo conciso do conteúdo do arquivo
+        Use para salvar códigos, notas, listas ou qualquer texto gerado.
+        Nomes de arquivos não podem conter "/" assim como em qualquer sistema operacional.
         
         Args:
-            acao: Tipo de operação a ser executada (obrigatório)
-            arquivo: Nome do arquivo (obrigatório para todas as ações, exceto 'listar', para deletar, pode incluir múltiplos arquivos separados por '|')
-            conteudo: Conteúdo para escrita (obrigatório apenas para 'criar')
-            foco: Aspecto específico para resumir (opcional, apenas para 'resumir')
-        
-        Returns:
-            Resultado claro da operação ou mensagem de erro detalhada com sugestões
-            de como corrigir a chamada da ferramenta
+            nome: Nome do arquivo com extensão (ex: nota.txt, script.py).
+            conteudo: O texto completo que será escrito no arquivo.
         """
-
-        try:
-            match acao:
-                case 'criar':
-                    if not arquivo: return "Especifique o nome do arquivo a ser criado!"
-                    return self._create_file(arquivo, conteudo)
-                case 'deletar':
-                    if not arquivo: return "Especifique o(s) arquivo a ser(em) deletado(s)!"
-                    return self._delete_files(arquivo)
-                case 'listar':
-                    return self._list_files()
-                case 'resumir':
-                    if not arquivo: return "Especifique o nome do arquivo a ser resumido!"
-                    return self._summarize_file(arquivo, foco)
-                case _:
-                    return f'Operação desconhecida: {acao}'
+        try:            
+            full_path = FILE_SANDBOX / nome
+            
+            if full_path.exists():
+                current = full_path.read_text(encoding='utf-8')
+                preview = current if len(current) < 200 else current[:200] + '[...]'
+                return f'Arquivo já existe! Conteúdo: {preview}'
+            
+            full_path.write_text(conteudo or '', encoding='utf-8')
+            return f'Arquivo {nome} criado com sucesso!'
+            
+        except PermissionError as e:
+            return f'Erro de permissão ao criar o arquivo {nome}: {e}'
+        except OSError as e:
+            return f'Erro no sistema de arquivos ao criar {nome}: {e}'
         except Exception as e:
-            return f'Erro na operação {acao}: {str(e)}'
+            return f'Erro inesperado ao criar arquivo {nome}: {e}'
+
+    @tool
+    def ler_arquivo(self, nome: str, foco: Optional[str] = None) -> str:
+        """Lê um arquivo. Se for muito grande, resume automaticamente com IA auxiliar.
+        
+        O modelo deve usar 'foco' se estiver procurando algo específico num arquivo grande.
+        
+        Args:
+            nome: Nome do arquivo.
+            foco: (Opcional) Se o arquivo for resumido, foca neste tópico.
+        """
+        # Tenta ler primeiro
+        conteudo = self._read_file(nome)
+        
+        # Se retornou erro, devolve o erro
+        if conteudo.startswith("Erro"):
+            return conteudo
+            
+        # Limite de caracteres "seguro" antes de decidir resumir (aprox 3k tokens)
+        LIMITE_TAMANHO = 3000
+        
+        if len(conteudo) > LIMITE_TAMANHO:
+            return (f"Arquivo '{nome}' é muito grande ({len(conteudo)} caracteres). "
+                    f"Gerando resumo automático...\n\n" + 
+                    self._summarize_file(nome, foco))
+        
+        return conteudo
+
+    @tool
+    def listar_arquivos(self) -> str:
+        """Lista todos os nomes de arquivos presentes no diretório sandbox.
+        
+        Use para ver o que já foi criado antes de criar novos arquivos.
+        """
+        return self._list_files()
+
+    @tool
+    def deletar_arquivo(self, nome: str) -> str:
+        """Remove arquivos do sistema.
+        
+        Args:
+            nome: Nome do arquivo (ou arquivos separados por |) para deletar.
+        """
+        return self._delete_files(nome)

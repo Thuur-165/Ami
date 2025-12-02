@@ -7,19 +7,24 @@ import re
 
 class CLI:
     def __init__(self):
-        colors = config.colors
-        self.colors = colors
-        self.config = config
         self.HISTORY_PATH = Path(__file__).parent.parent / 'memory' / 'history.json'
+
+    @classmethod
+    def iprint(cls, title: str, *values: object):
+        """Info print"""
+        print(f"\n\n[{config.colors['info']}INFO{config.colors['default']}]{config.colors['default']} {config.colors['bold']}{title}{config.colors['default']}:")
+        for value in values:
+            print(value, end="", flush=True)
+        print("\n\n")
 
     def print_header(self):
         """Imprime o cabeçalho principal"""
         os.system('cls' if os.name == 'nt' else 'clear')
-        print(f'{self.colors["header"]}{self.colors["bold"]}\t\t{self.config.emojis["chat"]}Ami rodando!\n' + '='*50 + self.colors['default'])
+        print(f'{config.colors["header"]}{config.colors["bold"]}\t\t{config.emojis["chat"]}Ami rodando!\n' + '='*50 + config.colors['default'])
 
     def is_command(self, user_input: str, command_type: str) -> bool:
         """Verifica se a entrada do usuário contém um comando específico"""
-        commands = self.config.commands.get(command_type, [])
+        commands = config.commands.get(command_type, [])
         return any(cmd in user_input.lower() for cmd in commands)
 
     def _extract_image_command(self, user_input: str) -> tuple[str, list[str]]:
@@ -62,29 +67,29 @@ class CLI:
                 
                 # Verificar se o arquivo existe
                 if not image_path.exists():
-                    print(f'{self.colors["error"]}❌ Imagem não encontrada: {path_str}{self.colors["default"]}')
+                    print(f'{config.colors["error"]}❌ Imagem não encontrada: {path_str}{config.colors["default"]}')
                     continue
                 
                 # Verificar se é um arquivo
                 if not image_path.is_file():
-                    print(f'{self.colors["error"]}❌ Caminho não é um arquivo: {path_str}{self.colors["default"]}')
+                    print(f'{config.colors["error"]}❌ Caminho não é um arquivo: {path_str}{config.colors["default"]}')
                     continue
                 
                 # Verificar extensão suportada
                 supported_extensions = {'.jpg', '.jpeg', '.png', '.webp'}
                 if image_path.suffix.lower() not in supported_extensions:
-                    print(f'{self.colors["warning"]}⚠️  Formato não suportado: {path_str}')
-                    print(f'{self.colors["info"]}Formatos suportados: JPG, PNG, WebP{self.colors["default"]}')
+                    print(f'{config.colors["warning"]}⚠️  Formato não suportado: {path_str}')
+                    print(f'{config.colors["info"]}Formatos suportados: JPG, PNG, WebP{config.colors["default"]}')
                     continue
                 
                 # Preparar imagem usando o SDK do LM Studio
                 image_handle = lms.prepare_image(str(image_path))
                 image_handles.append(image_handle)
                 
-                print(f'{self.colors["success"]}✅ Imagem carregada: {image_path.name}{self.colors["default"]}')
+                print(f'{config.colors["success"]}✅ Imagem carregada: {image_path.name}{config.colors["default"]}')
                 
             except Exception as e:
-                print(f'{self.colors["error"]}❌ Erro ao carregar imagem {path_str}: {str(e)}{self.colors["default"]}')
+                print(f'{config.colors["error"]}❌ Erro ao carregar imagem {path_str}: {str(e)}{config.colors["default"]}')
         
         return image_handles
 
@@ -103,11 +108,11 @@ class CLI:
         # Preparar imagens
         image_handles = []
         if image_paths:
-            print(f'{self.colors["info"]}🖼️  Processando {len(image_paths)} imagem(ns)...{self.colors["default"]}')
+            print(f'{config.colors["info"]}🖼️  Processando {len(image_paths)} imagem(ns)...{config.colors["default"]}')
             image_handles = self._prepare_images(image_paths)
             
             if not image_handles:
-                print(f'{self.colors["warning"]}⚠️  Nenhuma imagem válida foi carregada.{self.colors["default"]}')
+                print(f'{config.colors["warning"]}⚠️  Nenhuma imagem válida foi carregada.{config.colors["default"]}')
         
         return clean_text, image_handles
 
@@ -118,7 +123,7 @@ class CLI:
         """
         while True:
             try:
-                prompt = input(f'\n{self.colors["user"]}>>> {self.colors["default"]}')
+                prompt = input(f'\n{config.colors["user"]}>>> {config.colors["default"]}')
                 
                 if not prompt:
                     self._handle_empty_input()
@@ -126,7 +131,7 @@ class CLI:
                 
                 # Verifica comandos de saída
                 if self.is_command(prompt, 'exit'):
-                    print(f'{self.colors["success"]}Tchau! 👋{self.colors["default"]}')
+                    print(f'{config.colors["success"]}Tchau! 👋{config.colors["default"]}')
                     exit(0)
                 
                 # Verifica comando de ajuda
@@ -153,49 +158,46 @@ class CLI:
                 
             except KeyboardInterrupt:
                 if config.get('advanced.keyboard_interrupt'):
-                    print(f'\n{self.colors["warning"]}{self.config.emojis["warning"]}Interrompido pelo usuário{self.colors["default"]}')
+                    print(f'\n{config.colors["warning"]}{config.emojis["warning"]}Interrompido pelo usuário{config.colors["default"]}')
                     exit(0)
                 else:
                     exit(1)
             except EOFError:
-                print(f'\n{self.colors["success"]}Tchau! 👋{self.colors["default"]}')
+                print(f'\n{config.colors["success"]}Tchau! 👋{config.colors["default"]}')
                 exit(0)
 
     def _handle_empty_input(self):
         """Manipula entrada vazia do usuário"""
-        print(f'{self.colors["warning"]}Digite algo ou use um comando válido{self.colors["default"]}')
-        print(f'{self.colors["info"]}Dica: digite "/help" para ver os comandos disponíveis{self.colors["default"]}')
+        print(f'{config.colors["warning"]}Digite algo ou use um comando válido{config.colors["default"]}')
+        print(f'{config.colors["info"]}Dica: digite "/help" para ver os comandos disponíveis{config.colors["default"]}')
 
     def _handle_clear_history(self):
         """Manipula comando de limpar histórico"""
         import time
         
-        emojis = self.config.emojis
-        
         print('\n' + '='*85 + '\n')
-        print(f'{emojis["warning"]}{self.colors["warning"]}Histórico será apagado em {self.config.get("advanced.data_clear_delay", 4)} segundos!! {self.colors["info"]}(Para interromper, Ctrl+C ou feche o terminal){self.colors["default"]}')
+        print(f'{config.emojis["warning"]}{config.colors["warning"]}Histórico será apagado em {config.get("advanced.data_clear_delay", 4)} segundos!! {config.colors["info"]}(Para interromper, Ctrl+C ou feche o terminal){config.colors["default"]}')
         print('\n' + '='*85)
         
         try:
-            time.sleep(self.config.get('advanced.data_clear_delay', 4) + 1)
+            time.sleep(config.get('advanced.data_clear_delay', 4) + 1)
             
             # Limpa o histórico
             self.HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
             with open(self.HISTORY_PATH, 'w', encoding='utf-8') as file:
                 json.dump({'messages': []}, file, indent=4, ensure_ascii=False)
             
-            print(f'{self.colors["header"]}- {self.colors["info"]}Histórico limpo{self.colors["default"]}')
-            print(f'{emojis["success"]}{self.colors["success"]}Histórico limpo com sucesso!{self.colors["default"]}\n')
+            print(f'{config.colors["header"]}- {config.colors["info"]}Histórico limpo{config.colors["default"]}')
+            print(f'{config.emojis["success"]}{config.colors["success"]}Histórico limpo com sucesso!{config.colors["default"]}\n')
             
         except KeyboardInterrupt:
-            print(f'\n{self.colors["info"]}Operação cancelada{self.colors["default"]}')
+            print(f'\n{config.colors["info"]}Operação cancelada{config.colors["default"]}')
 
     def _handle_show_history(self):
         """Manipula comando de mostrar histórico"""
-        emojis = self.config.emojis
         
         print('\n\n' + '='*50)
-        print(f'{self.colors["header"]}{self.colors["bold"]}\t{emojis["history"]}Conteúdo do histórico:{self.colors["default"]}')
+        print(f'{config.colors["header"]}{config.colors["bold"]}\t{config.emojis["history"]}Conteúdo do histórico:{config.colors["default"]}')
         print('='*50 + '\n')
 
         try:
@@ -208,38 +210,38 @@ class CLI:
                         role = message.get('role', 'unknown')
                         content = message.get('content', '')[:100] + '...' if len(message.get('content', '')) > 100 else message.get('content', '')
                         
-                        color = self.colors['user'] if role == 'user' else self.colors['assistant']
+                        color = config.colors['user'] if role == 'user' else config.colors['assistant']
                         
                         # Indicar se há imagens na mensagem
                         images_indicator = ' 🖼️' if message.get('images') else ''
                         
-                        print(f'{self.colors["info"]}{i}. {color}[{role.upper()}]{images_indicator}{self.colors["default"]} {content}')
+                        print(f'{config.colors["info"]}{i}. {color}[{role.upper()}]{images_indicator}{config.colors["default"]} {content}')
                 else:
-                    print(f'{self.colors["info"]}- {self.colors["header"]}{self.colors["underline"]}Vazio{self.colors["default"]}')
+                    print(f'{config.colors["info"]}- {config.colors["header"]}{config.colors["underline"]}Vazio{config.colors["default"]}')
                     
         except (FileNotFoundError, json.JSONDecodeError):
-            print(f'{self.colors["info"]}- {self.colors["header"]}{self.colors["underline"]}Nenhum histórico encontrado{self.colors["default"]}')
+            print(f'{config.colors["info"]}- {config.colors["header"]}{config.colors["underline"]}Nenhum histórico encontrado{config.colors["default"]}')
 
         print('\n' + '='*50)
 
     def _show_help(self):
         """Exibe ajuda dos comandos disponíveis dinamicamente"""
         print('\n\n' + '='*50)
-        print(self.colors['header'] + self.colors['bold'] + '📋 Comandos disponíveis:' + self.colors['default'])
+        print(config.colors['header'] + config.colors['bold'] + '📋 Comandos disponíveis:' + config.colors['default'])
         print('='*50)
         
         # Itera pelos comandos disponíveis na configuração
-        available_commands = self.config.commands
+        available_commands = config.commands
         
         for cmd_key, cmd_list in available_commands.items():
             if cmd_list:  # Só mostra se há comandos definidos
                 cmd_str = ', '.join(cmd_list)
-                print(f'{self.colors["header"]}- {self.colors["info"]}{cmd_str}{self.colors["default"]} - {cmd_key}')
+                print(f'{config.colors["header"]}- {config.colors["info"]}{cmd_str}{config.colors["default"]} - {cmd_key}')
         
         # Adicionar ajuda específica para imagens
-        print(f'\n{self.colors["header"]}🖼️  Comandos de imagem:{self.colors["default"]}')
-        print(f'{self.colors["info"]}/img caminho/para/imagem.jpg{self.colors["default"]} - Enviar imagem')
-        print(f'{self.colors["info"]}/image "caminho com espaços/imagem.png"{self.colors["default"]} - Enviar imagem (com aspas)')
-        print(f'{self.colors["info"]}Formatos suportados: JPG, PNG, WebP{self.colors["default"]}')
+        print(f'\n{config.colors["header"]}🖼️  Comandos de imagem:{config.colors["default"]}')
+        print(f'{config.colors["info"]}/img caminho/para/imagem.jpg{config.colors["default"]} - Enviar imagem')
+        print(f'{config.colors["info"]}/image "caminho com espaços/imagem.png"{config.colors["default"]} - Enviar imagem (com aspas)')
+        print(f'{config.colors["info"]}Formatos suportados: JPG, PNG, WebP{config.colors["default"]}')
         
         print('='*50 + '\n')
