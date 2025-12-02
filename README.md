@@ -20,7 +20,7 @@ Feito por um garoto de 14 anos que simplesmente decidiu que queria uma amiga de 
 - Sistema de prompt dinâmico (primeira conversa × conversas normais) – elimina alucinações de “lembro de ontem”  
 - Histórico persistente com sliding window configurável  
 - CLI colorida, comandos (/help, /clear, /history), tratamento de erros robusto  
-- 100% configurável via `config.yaml` e `prompts.yaml`
+- 100% configurável via `config/config.json` e `prompts.yaml`
 
 ## Demo rápida (exemplo real, direto do terminal do dev)
 
@@ -94,5 +94,6 @@ Qualquer estrela nesse repositório é combustível pra esse garoto continuar co
 Feito com poucas horas de sono, pouca paciência pra coisa meia-boca, ódio por coisa boa ser paga, vício por Python e alguns anos de vida a menos.
 
 – Thuur (Arthur), 2025
+
 
 Qualquer dúvida, abre uma issue ou me chama no Discord que eu ajudo.
